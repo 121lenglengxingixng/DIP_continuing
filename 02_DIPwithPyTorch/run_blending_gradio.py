@@ -2,8 +2,17 @@ import gradio as gr
 from PIL import ImageDraw
 import numpy as np
 import torch
+import cv2
+import torch.nn.functional as F
 
-# Initialize the polygon state
+# 按照我理想的状况去写文件的注释文档
+"""
+1.辅助函数
+1.1 initialize_polygon: 初始化多边形状态
+1.2 add_point: 当用户点击图像时，向多边形添加一个点
+
+"""
+#1.1 Initialize the polygon state
 def initialize_polygon():
     """
     Initializes the polygon state.
@@ -13,7 +22,7 @@ def initialize_polygon():
     """
     return {'points': [], 'closed': False}
 
-# Add a point to the polygon when the user clicks on the image
+#1.2 Add a point to the polygon when the user clicks on the image
 def add_point(img_original, polygon_state, evt: gr.SelectData):
     """
     Adds a point to the polygon based on user click event.
@@ -45,7 +54,7 @@ def add_point(img_original, polygon_state, evt: gr.SelectData):
 
     return img_with_poly, polygon_state
 
-# Close the polygon when the user clicks the "Close Polygon" button
+#1.3 Close the polygon when the user clicks the "Close Polygon" button
 def close_polygon(img_original, polygon_state):
     """
     Closes the polygon if there are at least three points.
@@ -105,14 +114,17 @@ def create_mask_from_points(points, img_h, img_w):
     Returns:
         np.ndarray: Binary mask of shape (img_h, img_w).
     """
+    # 创建一个指定尺寸的空白掩膜
     mask = np.zeros((img_h, img_w), dtype=np.uint8)
-    ### FILL: Obtain Mask from Polygon Points. 
-    ### 0 indicates outside the Polygon.
-    ### 255 indicates inside the Polygon.
+
+    # 将点坐标转换为整数类型，确保它们可以用于绘制
+    points = points.astype(np.int32)
+
+    # 使用填充多边形的方式来生成掩膜，填充的区域为255
+    cv2.fillPoly(mask, [points], 255)
 
     return mask
 
-# Calculate the Laplacian loss between the foreground and blended image
 def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_mask):
     """
     Computes the Laplacian loss between the foreground and blended images within the masks.
@@ -126,9 +138,25 @@ def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_
     Returns:
         torch.Tensor: The computed Laplacian loss.
     """
-    loss = torch.tensor(0.0, device=foreground_img.device)
-    ### FILL: Compute Laplacian Loss with https://pytorch.org/docs/stable/generated/torch.nn.functional.conv2d.html.
-    ### Note: The loss is computed within the masks.
+    # 获取图像通道数
+    channels = foreground_img.shape[1]
+
+    # 定义 Laplacian kernel 并扩展到与输入通道数匹配的形状
+    laplacian_kernel = torch.tensor([[0, 1, 0], 
+                                     [1, -4, 1], 
+                                     [0, 1, 0]], dtype=torch.float32, device=foreground_img.device)
+    laplacian_kernel = laplacian_kernel.view(1, 1, 3, 3).repeat(channels, 1, 1, 1)
+    
+    # 计算 foreground_img 和 blended_img 的 Laplacian
+    foreground_lap = F.conv2d(foreground_img, laplacian_kernel, padding=1, groups=channels)
+    blended_lap = F.conv2d(blended_img, laplacian_kernel, padding=1, groups=channels)
+    
+    # 使用前景和背景掩膜计算在掩膜内的 Laplacian 差异
+    laplacian_diff = (foreground_lap - blended_lap) ** 2
+    laplacian_diff = laplacian_diff * foreground_mask + laplacian_diff * background_mask
+
+    # 计算掩膜区域内的均方差
+    loss = laplacian_diff.mean()
 
     return loss
 
