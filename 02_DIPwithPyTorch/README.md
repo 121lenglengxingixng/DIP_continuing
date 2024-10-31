@@ -14,6 +14,11 @@
 ### 1. Implement Poisson Image Editing with PyTorch.
 Fill the [Polygon to Mask function](run_blending_gradio.py#L95) and the [Laplacian Distance Computation](run_blending_gradio.py#L115) of 'run_blending_gradio.py'.
 
+### Results for Poisson Image Editing:
+- Input backImage: ![](./result/ori.png)
+- Input sourceImage: ![](./data_poission/monolisa/source.png)
+- Result Image: ![](./result/result.png)
+
 
 ### 2. Pix2Pix implementation.
 See [Pix2Pix subfolder](Pix2Pix/).
