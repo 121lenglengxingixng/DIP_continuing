@@ -9,6 +9,9 @@ from facades_dataset import FacadesDataset
 from FCN_network import FullyConvNetwork
 from torch.optim.lr_scheduler import StepLR
 
+import os
+os.chdir('/Users/taomacheng/Desktop/DIP/DIP_continuing/02_DIPwithPyTorch/Pix2Pix')
+
 def tensor_to_image(tensor):
     """
     Convert a PyTorch tensor to a NumPy array suitable for OpenCV.
@@ -142,8 +145,10 @@ def main():
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     # Initialize datasets and dataloaders
-    train_dataset = FacadesDataset(list_file='train_list.txt')
-    val_dataset = FacadesDataset(list_file='val_list.txt')
+    # train_dataset = FacadesDataset(list_file='train_list.txt')
+    train_dataset = FacadesDataset(list_file='/Users/taomacheng/Desktop/DIP/DIP_continuing/02_DIPwithPyTorch/Pix2Pix/train_list.txt')
+    # val_dataset = FacadesDataset(list_file='val_list.txt')
+    val_dataset = FacadesDataset(list_file='/Users/taomacheng/Desktop/DIP/DIP_continuing/02_DIPwithPyTorch/Pix2Pix/val_list.txt')
 
     train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=4)
