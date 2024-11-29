@@ -90,8 +90,8 @@ def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch, num_
 
         # Compute the loss
         loss = criterion(outputs, image_semantic)
-
-        # Backward pass and optimization
+    
+       # Backward pass and optimization
         loss.backward()
         optimizer.step()
 
@@ -177,3 +177,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
